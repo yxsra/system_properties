@@ -253,9 +253,9 @@ int SystemProperties::Update(prop_info* pi, const char* value, unsigned int len)
   serial |= 1;
   atomic_store_explicit(&pi->serial, serial, memory_order_relaxed);
 
-    memset(pi->value,'\0',PROP_VALUE_MAX);
-
-    strlcpy(pi->value, value, len + 1);
+//    memset(pi->value,'\0',PROP_VALUE_MAX);
+//    strlcpy(pi->value, value, len + 1);
+    strncpy(pi->value, value, PROP_VALUE_MAX);
   // Now the primary value property area is up-to-date. Let readers know that they should
   // look at the property value instead of the backup area.
   atomic_thread_fence(memory_order_release);
@@ -264,6 +264,9 @@ int SystemProperties::Update(prop_info* pi, const char* value, unsigned int len)
     atomic_store_explicit(&pi->serial, (len << 24) , memory_order_relaxed);
     return 0;
   }
+
+//  atomic_store_explicit(&pi->serial, (len << 24) | ((is_read_only(pi->name) ?
+//                                                       0u : (serial + 1)) & 0xffffff), memory_order_relaxed);
 
   atomic_store_explicit(&pi->serial, (len << 24) | ((serial + 1) & 0xffffff), memory_order_relaxed);
   __futex_wake(&pi->serial, INT32_MAX);  // Fence by side effect
